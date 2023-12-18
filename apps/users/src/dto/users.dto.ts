@@ -17,6 +17,13 @@ export class RegisterDto {
   @IsNotEmpty({ message: 'Email is required' })
   @IsEmail({}, { message: 'Email is invalid' })
   email: string;
+
+  @Field()
+  @IsNotEmpty({ message: 'Email is required' })
+  phone_number: number;
+
+  // @Field()
+  // address: string;
 }
 
 @InputType()
