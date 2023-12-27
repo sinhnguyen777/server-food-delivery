@@ -9,15 +9,15 @@ import { EmailService } from './email.service';
 @Module({
   imports: [
     MailerModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
+      imports: [ConfigModule.forRoot({ isGlobal: true })],
+      useFactory: async () => ({
         // problems can not read .env
         transport: {
-          host: configService.get('SMTP_HOST'),
+          host: 'smtp.gmail.com', // smtp.gmail.com
           secure: true,
           auth: {
-            user: configService.get('SMTP_USER'),
-            pass: configService.get('SMTP_PASSWORD'),
+            user: 'sinhnguyen.me@gmail.com', // sinhnguyen.me@gmail.com
+            pass: 'zrsy bpux zqeh yqhr', // zrsy bpux zqeh yqhr
           },
         },
         defaults: {

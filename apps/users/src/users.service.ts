@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
-import { LoginDto, RegisterDto } from './dto/users.dto';
+import { JwtService, JwtVerifyOptions } from '@nestjs/jwt';
+import { ActivationDto, LoginDto, RegisterDto } from './dto/users.dto';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { Response } from 'express';
 import * as bcrypt from 'bcrypt';
@@ -60,6 +60,8 @@ export class UsersService {
 
     const activationCode = activationToken.activationToken;
 
+    const activation_token = activationToken.token;
+
     await this.emailService.sendMail({
       email: email,
       subject: 'Activate your account',
@@ -68,7 +70,7 @@ export class UsersService {
       activationCode,
     });
 
-    return { user, response };
+    return { activation_token, response };
   }
 
   // create activation token
@@ -87,6 +89,36 @@ export class UsersService {
     );
 
     return { token, activationToken };
+  }
+
+  // activition user
+  async activateUser(activationDto: ActivationDto, response: Response) {
+    const { activationCode, activationToken } = activationDto;
+
+    const newUser: { user: UserData; activitionCode: string } =
+      this.jwtService.verify(activationToken, {
+        secret: this.configService.get<string>('ACTIVATION_TOKEN'),
+      } as JwtVerifyOptions) as { user: UserData; activitionCode: string };
+
+    if (newUser.activitionCode !== activationCode) {
+      throw new BadRequestException('Invalid activation code');
+    }
+
+    const { name, email, password, phone_number } = newUser.user;
+
+    const existUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existUser) {
+      throw new BadRequestException('User already exists with email');
+    }
+
+    const user = await this.prisma.user.create({
+      data: { name, email, password, phone_number },
+    });
+
+    return { user, response };
   }
 
   // login users service
